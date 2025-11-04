@@ -1,0 +1,12 @@
+# Ignore model exports and other large artifacts
+*.pkl
+
+# Byte-compiled / cached files
+__pycache__/
+*.py[cod]
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Hugging Face Space clone (kept as separate repo)
+hf-space/

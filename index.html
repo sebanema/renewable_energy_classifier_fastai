@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Renewable Energy Classifier</title>
+    <style>
+      :root{color-scheme:light;font-family:"Segoe UI",system-ui,sans-serif;}
+      body{margin:0;background:#f3f6ff;color:#1a2b4a;}
+      main{max-width:460px;margin:clamp(2rem,9vh,5rem) auto;padding:2.2rem 2rem;background:#fff;border-radius:1.1rem;box-shadow:0 18px 38px -28px rgba(20,46,90,.5);}
+      h1{margin:0 0 .6rem;text-align:center;font-size:clamp(1.8rem,2vw+1.4rem,2.3rem);}
+      p{margin:0 0 1.4rem;line-height:1.5;text-align:center;}
+      label{display:block;margin-bottom:.6rem;font-weight:600;}
+      input[type="file"]{width:100%;padding:.85rem;border:1px solid #d5e0f8;border-radius:.8rem;background:#f6f8ff;}
+      button{width:100%;margin-top:1rem;padding:.85rem;border:none;border-radius:.8rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
+      button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 20px -18px rgba(33,130,211,.7);}
+      button:disabled{opacity:.6;cursor:wait;}
+      #result{margin-top:1.4rem;padding:1rem;border-radius:.9rem;background:#eef3ff;font-family:"SFMono-Regular",Consolas,monospace;font-size:.95rem;white-space:pre-line;min-height:3.2rem;}
+      footer{margin-top:1.6rem;font-size:.85rem;text-align:center;color:#506485;}
+      code{background:#e7edff;padding:.1rem .3rem;border-radius:.45rem;}
+      a{color:inherit;font-weight:600;}
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Renewable Energy Classifier</h1>
+      <p>Upload a photo of solar panels, wind turbines, or a hydroelectric dam. The image is sent to your HuggingFace Space and the predicted scores appear below.</p>
+      <label for="image-input">Pick a JPG or PNG image</label>
+      <input id="image-input" type="file" accept="image/jpeg,image/png" />
+      <button id="submit-btn">Classify</button>
+      <div id="result">Waiting for an image...</div>
+      <footer>Set <code>apiUrl</code> after your Space is live. <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noreferrer">Need a refresher?</a></footer>
+    </main>
+    <script>
+      // Replace with your live HuggingFace Space endpoint once deployed.
+      const apiUrl = "https://your-username-renewable-energy.hf.space/run/predict";
+      const fileInput = document.getElementById("image-input");
+      const submitBtn = document.getElementById("submit-btn");
+      const result = document.getElementById("result");
+
+      const toBase64 = (file) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(",")[1]);
+          reader.onerror = () => reject(new Error("Unable to read the file."));
+          reader.readAsDataURL(file);
+        });
+
+      const formatScores = (dictionary) =>
+        Object.entries(dictionary)
+          .map(([label, score]) => `${label.padEnd(20)} ${score.toFixed(3)}`)
+          .join("\n");
+
+      async function classify() {
+        const file = fileInput.files[0];
+        if (!file) {
+          result.textContent = "Please choose an image first.";
+          return;
+        }
+        submitBtn.disabled = true;
+        result.textContent = "Sending image to HuggingFace Space...";
+        try {
+          const payload = { data: [{ name: "image", data: await toBase64(file) }] };
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) throw new Error(`API returned ${response.status}. Check Space logs.`);
+          const body = await response.json();
+          const scores = body?.data?.[0];
+          if (!scores) throw new Error("Unexpected response format. Inspect the Space output.");
+          result.textContent = formatScores(scores);
+        } catch (error) {
+          console.error(error);
+          result.textContent =
+            "Something went wrong. Confirm the Space URL and that it is running.\n" + error.message;
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
+
+      submitBtn.addEventListener("click", classify);
+    </script>
+  </body>
+</html>
