@@ -7,28 +7,52 @@
     <style>
       :root{color-scheme:light;font-family:"Segoe UI",system-ui,sans-serif;}
       body{margin:0;background:#f3f6ff;color:#1a2b4a;}
-      main{max-width:460px;margin:clamp(2rem,9vh,5rem) auto;padding:2.2rem 2rem;background:#fff;border-radius:1.1rem;box-shadow:0 18px 38px -28px rgba(20,46,90,.5);}
-      h1{margin:0 0 .6rem;text-align:center;font-size:clamp(1.8rem,2vw+1.4rem,2.3rem);}
-      p{margin:0 0 1.4rem;line-height:1.5;text-align:center;}
-      label{display:block;margin-bottom:.6rem;font-weight:600;}
-      input[type="file"]{width:100%;padding:.85rem;border:1px solid #d5e0f8;border-radius:.8rem;background:#f6f8ff;}
-      button{width:100%;margin-top:1rem;padding:.85rem;border:none;border-radius:.8rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
-      button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 20px -18px rgba(33,130,211,.7);}
+      main{max-width:920px;margin:clamp(2rem,9vh,5rem) auto;padding:2.4rem 2.3rem;background:#fff;border-radius:1.1rem;box-shadow:0 18px 38px -28px rgba(20,46,90,.38);}
+      h1{margin:0 0 .8rem;text-align:center;font-size:clamp(1.9rem,2vw+1.4rem,2.4rem);}
+      p.lead{margin:0 0 2rem;line-height:1.6;text-align:center;color:#425778;}
+      .io-grid{display:grid;gap:1.8rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+      .card{padding:1.4rem;border-radius:1rem;background:#f6f8ff;border:1px solid #d9e3ff;display:flex;flex-direction:column;gap:1.1rem;min-height:360px;}
+      label{font-weight:600;}
+      input[type="file"]{width:100%;padding:.9rem;border:1px dashed #b9c8f2;border-radius:.9rem;background:#fff;cursor:pointer;}
+      button{width:100%;margin-top:.5rem;padding:.9rem;border:none;border-radius:.9rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
+      button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 16px 24px -18px rgba(33,130,211,.7);}
       button:disabled{opacity:.6;cursor:wait;}
-      #result{margin-top:1.4rem;padding:1rem;border-radius:.9rem;background:#eef3ff;font-family:"SFMono-Regular",Consolas,monospace;font-size:.95rem;white-space:pre-line;min-height:3.2rem;}
-      footer{margin-top:1.6rem;font-size:.85rem;text-align:center;color:#506485;}
-      code{background:#e7edff;padding:.1rem .3rem;border-radius:.45rem;}
+      .preview-shell{flex:1;display:flex;align-items:center;justify-content:center;background:#e8eeff;border-radius:.9rem;position:relative;overflow:hidden;}
+      #preview-img{max-width:100%;max-height:100%;display:none;}
+      .preview-shell span{color:#5a6b8a;font-size:.95rem;text-align:center;padding:0 1rem;}
+      #status{padding:.75rem .9rem;border-radius:.75rem;background:#fff;color:#3b4c6f;border:1px solid #d9e3ff;font-weight:500;}
+      .predictions{display:flex;flex-direction:column;gap:.8rem;}
+      .prediction-row{display:grid;grid-template-columns:140px 1fr;gap:.8rem;align-items:center;}
+      .prediction-row span{font-weight:600;text-transform:capitalize;}
+      .bar{position:relative;height:.85rem;border-radius:.85rem;background:#dbe6ff;overflow:hidden;}
+      .bar::after{content:"";position:absolute;left:0;top:0;height:100%;width:var(--fill,0%);background:linear-gradient(135deg,#1f82ff,#1dc7c1);}
+      .bar-value{font-family:"SFMono-Regular",Consolas,monospace;font-size:.9rem;color:#223356;}
+      footer{margin-top:2.2rem;font-size:.85rem;text-align:center;color:#526180;}
+      code{background:#e7edff;padding:.1rem .35rem;border-radius:.45rem;}
       a{color:inherit;font-weight:600;}
     </style>
   </head>
   <body>
     <main>
       <h1>Renewable Energy Classifier</h1>
-      <p>Upload a photo of solar panels, wind turbines, or a hydroelectric dam. The image is sent to your HuggingFace Space and the predicted scores appear below.</p>
-      <label for="image-input">Pick a JPG or PNG image</label>
-      <input id="image-input" type="file" accept="image/jpeg,image/png" />
-      <button id="submit-btn">Classify</button>
-      <div id="result">Waiting for an image...</div>
+      <p class="lead">Upload a photo of solar panels, wind turbines, or a hydroelectric dam. The image is sent to your HuggingFace Space and the predicted scores appear below.</p>
+      <div class="io-grid">
+        <section class="card" aria-label="Image upload">
+          <div>
+            <label for="image-input">Step 1 · Choose a JPG or PNG image</label>
+            <input id="image-input" type="file" accept="image/jpeg,image/png" />
+            <button id="submit-btn">Classify</button>
+          </div>
+          <div class="preview-shell">
+            <img id="preview-img" alt="Selected preview" />
+            <span id="preview-placeholder">Your image preview appears here.</span>
+          </div>
+        </section>
+        <section class="card" aria-live="polite" aria-label="Prediction results">
+          <div id="status">Waiting for an image...</div>
+          <div id="results-panel" class="predictions" hidden></div>
+        </section>
+      </div>
       <footer>Set <code>apiUrl</code> after your Space is live. <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noreferrer">Need a refresher?</a></footer>
     </main>
     <script>
@@ -36,7 +60,10 @@
       const apiUrl = "https://sebanema-renewable-energy-classifier.hf.space/run/predict";
       const fileInput = document.getElementById("image-input");
       const submitBtn = document.getElementById("submit-btn");
-      const result = document.getElementById("result");
+      const statusBubble = document.getElementById("status");
+      const resultsPanel = document.getElementById("results-panel");
+      const previewImg = document.getElementById("preview-img");
+      const previewPlaceholder = document.getElementById("preview-placeholder");
 
       const toBase64 = (file) =>
         new Promise((resolve, reject) => {
@@ -46,19 +73,64 @@
           reader.readAsDataURL(file);
         });
 
-      const formatScores = (dictionary) =>
-        Object.entries(dictionary)
-          .map(([label, score]) => `${label.padEnd(20)} ${score.toFixed(3)}`)
-          .join("\n");
+      function updatePreview(file) {
+        if (!file) {
+          previewImg.style.display = "none";
+          previewImg.removeAttribute("src");
+          previewPlaceholder.hidden = false;
+          return;
+        }
+        previewImg.src = URL.createObjectURL(file);
+        previewImg.style.display = "block";
+        previewPlaceholder.hidden = true;
+      }
+
+      function renderScores(dictionary) {
+        resultsPanel.innerHTML = "";
+        const entries = Object.entries(dictionary)
+          .map(([label, score]) => ({ label, score }))
+          .sort((a, b) => b.score - a.score);
+
+        entries.forEach(({ label, score }) => {
+          const row = document.createElement("div");
+          row.className = "prediction-row";
+
+          const labelEl = document.createElement("span");
+          labelEl.textContent = label.replace(/_/g, " ");
+
+          const barWrapper = document.createElement("div");
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.style.setProperty("--fill", `${(score * 100).toFixed(1)}%`);
+
+          const value = document.createElement("div");
+          value.className = "bar-value";
+          value.textContent = `${(score * 100).toFixed(1)}%`;
+
+          barWrapper.appendChild(bar);
+          const container = document.createElement("div");
+          container.style.display = "flex";
+          container.style.flexDirection = "column";
+          container.style.gap = ".35rem";
+          container.appendChild(barWrapper);
+          container.appendChild(value);
+
+          row.appendChild(labelEl);
+          row.appendChild(container);
+          resultsPanel.appendChild(row);
+        });
+
+        resultsPanel.hidden = entries.length === 0;
+      }
 
       async function classify() {
         const file = fileInput.files[0];
         if (!file) {
-          result.textContent = "Please choose an image first.";
+          statusBubble.textContent = "Please choose an image first.";
           return;
         }
         submitBtn.disabled = true;
-        result.textContent = "Sending image to HuggingFace Space...";
+        statusBubble.textContent = "Uploading image to your HuggingFace Space...";
         try {
           const payload = { data: [{ name: "image", data: await toBase64(file) }] };
           const response = await fetch(apiUrl, {
@@ -70,15 +142,22 @@
           const body = await response.json();
           const scores = body?.data?.[0];
           if (!scores) throw new Error("Unexpected response format. Inspect the Space output.");
-          result.textContent = formatScores(scores);
+          statusBubble.textContent = "Inference complete. Highest confidence first.";
+          renderScores(scores);
         } catch (error) {
           console.error(error);
-          result.textContent =
-            "Something went wrong. Confirm the Space URL and that it is running.\n" + error.message;
+          statusBubble.textContent = "Something went wrong. Check the Space URL and logs.";
+          resultsPanel.hidden = true;
         } finally {
           submitBtn.disabled = false;
         }
       }
+
+      fileInput.addEventListener("change", () => {
+        updatePreview(fileInput.files[0]);
+        statusBubble.textContent = "Ready to classify. Click the button when you're set.";
+        resultsPanel.hidden = true;
+      });
 
       submitBtn.addEventListener("click", classify);
     </script>
