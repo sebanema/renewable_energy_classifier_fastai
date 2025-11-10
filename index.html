@@ -13,7 +13,9 @@
       .io-grid{display:grid;gap:1.8rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
       .card{padding:1.4rem;border-radius:1rem;background:#f6f8ff;border:1px solid #d9e3ff;display:flex;flex-direction:column;gap:1.1rem;min-height:360px;}
       label{font-weight:600;}
-      input[type="file"]{width:100%;padding:.9rem;border:1px dashed #b9c8f2;border-radius:.9rem;background:#fff;cursor:pointer;}
+      input[type="file"]{width:100%;padding:.9rem;border:1px dashed #b9c8f2;border-radius:.9rem;background:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;}
+      input[type="file"]::file-selector-button{margin-right:.8rem;padding:.55rem 1rem;border:none;border-radius:.7rem;background:#2d7be4;color:#fff;font-weight:600;cursor:pointer;}
+      .file-meta{margin-top:.35rem;font-size:.9rem;color:#55627e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       button{width:100%;margin-top:.5rem;padding:.9rem;border:none;border-radius:.9rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
       button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 16px 24px -18px rgba(33,130,211,.7);}
       button:disabled{opacity:.6;cursor:wait;}
@@ -41,6 +43,7 @@
           <div>
             <label for="image-input">Step 1 · Choose a JPG or PNG image</label>
             <input id="image-input" type="file" accept="image/jpeg,image/png" />
+            <div class="file-meta" id="file-meta">No file selected</div>
             <button id="submit-btn">Classify</button>
           </div>
           <div class="preview-shell">
@@ -53,7 +56,6 @@
           <div id="results-panel" class="predictions" hidden></div>
         </section>
       </div>
-      <footer>Set <code>apiUrl</code> after your Space is live. <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noreferrer">Need a refresher?</a></footer>
     </main>
     <script type="module">
       import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
@@ -64,6 +66,7 @@
       const resultsPanel = document.getElementById("results-panel");
       const previewImg = document.getElementById("preview-img");
       const previewPlaceholder = document.getElementById("preview-placeholder");
+      const fileMeta = document.getElementById("file-meta");
 
       const client = await Client.connect("sebanema/renewable-energy-classifier");
 
@@ -72,11 +75,13 @@
           previewImg.style.display = "none";
           previewImg.removeAttribute("src");
           previewPlaceholder.hidden = false;
+          fileMeta.textContent = "No file selected";
           return;
         }
         previewImg.src = URL.createObjectURL(file);
         previewImg.style.display = "block";
         previewPlaceholder.hidden = true;
+        fileMeta.textContent = file.name;
       }
 
       function renderScores(confidences) {
