@@ -57,7 +57,7 @@
     </main>
     <script>
       // Replace with your live HuggingFace Space endpoint once deployed.
-      const apiUrl = "https://sebanema-renewable-energy-classifier.hf.space/run/predict";
+      const apiUrl = "https://sebanema-renewable-energy-classifier.hf.space/api/predict/";
       const fileInput = document.getElementById("image-input");
       const submitBtn = document.getElementById("submit-btn");
       const statusBubble = document.getElementById("status");
@@ -132,7 +132,15 @@
         submitBtn.disabled = true;
         statusBubble.textContent = "Uploading image to your HuggingFace Space...";
         try {
-          const payload = { data: [{ name: "image", data: await toBase64(file) }] };
+          const payload = {
+            data: [
+              {
+                data: await toBase64(file),
+                meta: { _type: "gradio/file" },
+              },
+            ],
+            api_name: "/predict",
+          };
           const response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -140,8 +148,15 @@
           });
           if (!response.ok) throw new Error(`API returned ${response.status}. Check Space logs.`);
           const body = await response.json();
-          const scores = body?.data?.[0];
-          if (!scores) throw new Error("Unexpected response format. Inspect the Space output.");
+          const labelOutput = body?.data?.[0];
+          const confidences = labelOutput?.confidences;
+          if (!Array.isArray(confidences)) {
+            throw new Error("Unexpected response format. Inspect the Space output.");
+          }
+          const scores = confidences.reduce((acc, { label, confidence }) => {
+            acc[label] = confidence;
+            return acc;
+          }, {});
           statusBubble.textContent = "Inference complete. Highest confidence first.";
           renderScores(scores);
         } catch (error) {
