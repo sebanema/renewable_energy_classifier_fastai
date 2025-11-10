@@ -56,110 +56,118 @@
       <footer>Set <code>apiUrl</code> after your Space is live. <a href="https://huggingface.co/docs/hub/spaces-overview" target="_blank" rel="noreferrer">Need a refresher?</a></footer>
     </main>
     <script type="module">
-  import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client/+esm";
+      import { Client, handle_file } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 
-  const fileInput = document.getElementById("image-input");
-  const submitBtn = document.getElementById("submit-btn");
-  const statusBubble = document.getElementById("status");
-  const resultsPanel = document.getElementById("results-panel");
-  const previewImg = document.getElementById("preview-img");
-  const previewPlaceholder = document.getElementById("preview-placeholder");
+      const fileInput = document.getElementById("image-input");
+      const submitBtn = document.getElementById("submit-btn");
+      const statusBubble = document.getElementById("status");
+      const resultsPanel = document.getElementById("results-panel");
+      const previewImg = document.getElementById("preview-img");
+      const previewPlaceholder = document.getElementById("preview-placeholder");
 
-  // Connect once to your Space
-  const client = await Client.connect("sebanema/renewable-energy-classifier");
+      const client = await Client.connect("sebanema/renewable-energy-classifier");
 
-  function updatePreview(file) {
-    if (!file) {
-      previewImg.style.display = "none";
-      previewImg.removeAttribute("src");
-      previewPlaceholder.hidden = false;
-      return;
-    }
-    previewImg.src = URL.createObjectURL(file);
-    previewImg.style.display = "block";
-    previewPlaceholder.hidden = true;
-  }
-
-  function renderScores(confidences) {
-    resultsPanel.innerHTML = "";
-    const entries = (confidences || [])
-      .map(({ label, confidence }) => ({ label, score: confidence }))
-      .sort((a, b) => b.score - a.score);
-
-    entries.forEach(({ label, score }) => {
-      const row = document.createElement("div");
-      row.className = "prediction-row";
-
-      const labelEl = document.createElement("span");
-      labelEl.textContent = String(label).replace(/_/g, " ");
-
-      const barWrapper = document.createElement("div");
-      const bar = document.createElement("div");
-      bar.className = "bar";
-      bar.style.setProperty("--fill", `${(score * 100).toFixed(1)}%`);
-
-      const value = document.createElement("div");
-      value.className = "bar-value";
-      value.textContent = `${(score * 100).toFixed(1)}%`;
-
-      barWrapper.appendChild(bar);
-      const container = document.createElement("div");
-      container.style.display = "flex";
-      container.style.flexDirection = "column";
-      container.style.gap = ".35rem";
-      container.appendChild(barWrapper);
-      container.appendChild(value);
-
-      row.appendChild(labelEl);
-      row.appendChild(container);
-      resultsPanel.appendChild(row);
-    });
-
-    resultsPanel.hidden = entries.length === 0;
-  }
-
-  async function classify() {
-    const file = fileInput.files[0];
-    if (!file) {
-      statusBubble.textContent = "Please choose an image first.";
-      return;
-    }
-
-    submitBtn.disabled = true;
-    statusBubble.textContent = "Sending image to Hugging Face Space...";
-
-    try {
-      // Gradio JS client handles the HTTP/queue details for you.
-      const result = await client.predict("/predict", {
-        image: handle_file(file),
-      });
-
-      // For a gr.Label output, Gradio returns:
-      // { label: "...", confidences: [ {label, confidence}, ... ] }
-      const confidences = result?.confidences;
-      if (!Array.isArray(confidences)) {
-        throw new Error("Unexpected response format from Space.");
+      function updatePreview(file) {
+        if (!file) {
+          previewImg.style.display = "none";
+          previewImg.removeAttribute("src");
+          previewPlaceholder.hidden = false;
+          return;
+        }
+        previewImg.src = URL.createObjectURL(file);
+        previewImg.style.display = "block";
+        previewPlaceholder.hidden = true;
       }
 
-      statusBubble.textContent = "Inference complete. Highest confidence first.";
-      renderScores(confidences);
-    } catch (err) {
-      console.error(err);
-      statusBubble.textContent = "Error calling the Space. Check console / Space logs.";
-      resultsPanel.hidden = true;
-    } finally {
-      submitBtn.disabled = false;
-    }
-  }
+      function renderScores(confidences) {
+        resultsPanel.innerHTML = "";
 
-  fileInput.addEventListener("change", () => {
-    updatePreview(fileInput.files[0]);
-    statusBubble.textContent = "Ready to classify. Click the button when you're set.";
-    resultsPanel.hidden = true;
-  });
+        const entries = (confidences || [])
+          .map(({ label, confidence }) => ({
+            label: String(label),
+            score: Number(confidence ?? 0),
+          }))
+          .sort((a, b) => b.score - a.score);
 
-  submitBtn.addEventListener("click", classify);
-</script>
+        entries.forEach(({ label, score }) => {
+          const row = document.createElement("div");
+          row.className = "prediction-row";
 
+          const labelEl = document.createElement("span");
+          labelEl.textContent = label.replace(/_/g, " ");
+
+          const barWrapper = document.createElement("div");
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.style.setProperty("--fill", `${(score * 100).toFixed(1)}%`);
+
+          const value = document.createElement("div");
+          value.className = "bar-value";
+          value.textContent = `${(score * 100).toFixed(1)}%`;
+
+          barWrapper.appendChild(bar);
+          const container = document.createElement("div");
+          container.style.display = "flex";
+          container.style.flexDirection = "column";
+          container.style.gap = ".35rem";
+          container.appendChild(barWrapper);
+          container.appendChild(value);
+
+          row.appendChild(labelEl);
+          row.appendChild(container);
+          resultsPanel.appendChild(row);
+        });
+
+        resultsPanel.hidden = entries.length === 0;
+      }
+
+      async function classify() {
+        const file = fileInput.files[0];
+        if (!file) {
+          statusBubble.textContent = "Please choose an image first.";
+          return;
+        }
+
+        submitBtn.disabled = true;
+        statusBubble.textContent = "Sending image to Hugging Face Space...";
+
+        try {
+          const result = await client.predict("/predict", [handle_file(file)]);
+
+          console.log("Raw result from Space:", result);
+
+          const output = Array.isArray(result?.data) ? result.data[0] : result;
+
+          const confidences = output?.confidences;
+          if (!Array.isArray(confidences)) {
+            console.error("Unexpected result shape:", result);
+            statusBubble.textContent =
+              "Unexpected API response. Check the Space logs / console.";
+            resultsPanel.hidden = true;
+            return;
+          }
+
+          statusBubble.textContent =
+            "Inference complete. Highest confidence first.";
+          renderScores(confidences);
+        } catch (error) {
+          console.error("Error calling Space:", error);
+          statusBubble.textContent =
+            "Error calling the Space. Check console / Space logs.";
+          resultsPanel.hidden = true;
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
+
+      fileInput.addEventListener("change", () => {
+        updatePreview(fileInput.files[0]);
+        statusBubble.textContent =
+          "Ready to classify. Click the button when you're set.";
+        resultsPanel.hidden = true;
+      });
+
+      submitBtn.addEventListener("click", classify);
+    </script>
   </body>
 </html>
