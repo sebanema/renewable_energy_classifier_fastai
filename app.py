@@ -69,4 +69,4 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
-    demo.launch(show_error=True, queue=False)
+    demo.launch(show_error=True)
