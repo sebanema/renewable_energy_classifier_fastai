@@ -7,23 +7,21 @@
     <style>
       :root{color-scheme:light;font-family:"Segoe UI",system-ui,sans-serif;}
       body{margin:0;background:#f3f6ff;color:#1a2b4a;}
-      main{max-width:920px;margin:clamp(2rem,9vh,5rem) auto;padding:2.4rem 2.3rem;background:#fff;border-radius:1.1rem;box-shadow:0 18px 38px -28px rgba(20,46,90,.38);}
+      main{max-width:920px;margin:clamp(1.5rem,7vh,4.5rem) auto;padding:2.3rem;background:#fff;border-radius:1.1rem;box-shadow:0 18px 38px -28px rgba(20,46,90,.38);}
       h1{margin:0 0 .8rem;text-align:center;font-size:clamp(1.9rem,2vw+1.4rem,2.4rem);}
       p.lead{margin:0 0 2rem;line-height:1.6;text-align:center;color:#425778;}
-      .io-grid{display:grid;gap:1.8rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+      .io-grid{display:grid;gap:1.8rem;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));}
       .card{padding:1.4rem;border-radius:1rem;background:#f6f8ff;border:1px solid #d9e3ff;display:flex;flex-direction:column;gap:1.1rem;min-height:360px;}
-      label{font-weight:600;}
+      label{font-weight:600;display:block;margin-bottom:.35rem;}
       .file-input-wrapper{position:relative;}
       input[type="file"]{width:100%;padding:.9rem;border:1px dashed #b9c8f2;border-radius:.9rem;background:#fff;cursor:pointer;}
       input[type="file"]::file-selector-button{margin-right:.8rem;padding:.55rem 1rem;border:none;border-radius:.7rem;background:#2d7be4;color:#fff;font-weight:600;cursor:pointer;}
       .inline-filename{font-size:.95rem;color:#1f2d45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:absolute;left:8.2rem;right:1rem;top:50%;transform:translateY(-50%);pointer-events:none;}
       .file-meta{margin-top:.35rem;font-size:.9rem;color:#55627e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-      input[type="file"]::file-selector-button{margin-right:.8rem;padding:.55rem 1rem;border:none;border-radius:.7rem;background:#2d7be4;color:#fff;font-weight:600;cursor:pointer;}
-      .file-meta{margin-top:.35rem;font-size:.9rem;color:#55627e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-      button{width:100%;margin-top:.5rem;padding:.9rem;border:none;border-radius:.9rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
+      button{width:100%;margin-top:.8rem;padding:.95rem;border:none;border-radius:.9rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
       button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 16px 24px -18px rgba(33,130,211,.7);}
       button:disabled{opacity:.6;cursor:wait;}
-      .preview-shell{flex:1;display:flex;align-items:center;justify-content:center;background:#e8eeff;border-radius:.9rem;position:relative;overflow:hidden;}
+      .preview-shell{flex:1;display:flex;align-items:center;justify-content:center;background:#e8eeff;border-radius:.9rem;position:relative;overflow:hidden;min-height:200px;}
       #preview-img{max-width:100%;max-height:100%;display:none;}
       .preview-shell span{color:#5a6b8a;font-size:.95rem;text-align:center;padding:0 1rem;}
       #status{padding:.75rem .9rem;border-radius:.75rem;background:#fff;color:#3b4c6f;border:1px solid #d9e3ff;font-weight:500;}
@@ -33,9 +31,19 @@
       .bar{position:relative;height:.85rem;border-radius:.85rem;background:#dbe6ff;overflow:hidden;}
       .bar::after{content:"";position:absolute;left:0;top:0;height:100%;width:var(--fill,0%);background:linear-gradient(135deg,#1f82ff,#1dc7c1);}
       .bar-value{font-family:"SFMono-Regular",Consolas,monospace;font-size:.9rem;color:#223356;}
-      footer{margin-top:2.2rem;font-size:.85rem;text-align:center;color:#526180;}
       code{background:#e7edff;padding:.1rem .35rem;border-radius:.45rem;}
       a{color:inherit;font-weight:600;}
+
+      @media (max-width:700px){
+        main{padding:1.5rem;}
+        .io-grid{grid-template-columns:1fr;}
+        .card{min-height:auto;}
+        input[type="file"]::file-selector-button{width:100%;margin:0 0 .4rem;text-align:center;}
+        .inline-filename{display:none;}
+        .file-meta{white-space:normal;}
+        .preview-shell{min-height:180px;}
+        .prediction-row{grid-template-columns:1fr;gap:.4rem;}
+      }
     </style>
   </head>
   <body>
