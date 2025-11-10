@@ -13,7 +13,11 @@
       .io-grid{display:grid;gap:1.8rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
       .card{padding:1.4rem;border-radius:1rem;background:#f6f8ff;border:1px solid #d9e3ff;display:flex;flex-direction:column;gap:1.1rem;min-height:360px;}
       label{font-weight:600;}
-      input[type="file"]{width:100%;padding:.9rem;border:1px dashed #b9c8f2;border-radius:.9rem;background:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;}
+      .file-input-wrapper{position:relative;}
+      input[type="file"]{width:100%;padding:.9rem;border:1px dashed #b9c8f2;border-radius:.9rem;background:#fff;cursor:pointer;}
+      input[type="file"]::file-selector-button{margin-right:.8rem;padding:.55rem 1rem;border:none;border-radius:.7rem;background:#2d7be4;color:#fff;font-weight:600;cursor:pointer;}
+      .inline-filename{font-size:.95rem;color:#1f2d45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:absolute;left:8.2rem;right:1rem;top:50%;transform:translateY(-50%);pointer-events:none;}
+      .file-meta{margin-top:.35rem;font-size:.9rem;color:#55627e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       input[type="file"]::file-selector-button{margin-right:.8rem;padding:.55rem 1rem;border:none;border-radius:.7rem;background:#2d7be4;color:#fff;font-weight:600;cursor:pointer;}
       .file-meta{margin-top:.35rem;font-size:.9rem;color:#55627e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       button{width:100%;margin-top:.5rem;padding:.9rem;border:none;border-radius:.9rem;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#2d7be4,#1db9de);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;}
@@ -37,12 +41,15 @@
   <body>
     <main>
       <h1>Renewable Energy Classifier</h1>
-      <p class="lead">Upload a photo of solar panels, wind turbines, or a hydroelectric dam. The image is sent to your HuggingFace Space and the predicted scores appear below.</p>
+      <p class="lead">Showcase the model in action: upload a photo of solar panels, wind turbines, or a hydroelectric dam and review the predicted confidence scores instantly.</p>
       <div class="io-grid">
         <section class="card" aria-label="Image upload">
           <div>
             <label for="image-input">Step 1 · Choose a JPG or PNG image</label>
-            <input id="image-input" type="file" accept="image/jpeg,image/png" />
+            <div class="file-input-wrapper">
+              <input id="image-input" type="file" accept="image/jpeg,image/png" />
+              <span class="inline-filename" id="inline-filename">No file selected</span>
+            </div>
             <div class="file-meta" id="file-meta">No file selected</div>
             <button id="submit-btn">Classify</button>
           </div>
@@ -67,6 +74,7 @@
       const previewImg = document.getElementById("preview-img");
       const previewPlaceholder = document.getElementById("preview-placeholder");
       const fileMeta = document.getElementById("file-meta");
+      const inlineFilename = document.getElementById("inline-filename");
 
       const client = await Client.connect("sebanema/renewable-energy-classifier");
 
@@ -76,12 +84,14 @@
           previewImg.removeAttribute("src");
           previewPlaceholder.hidden = false;
           fileMeta.textContent = "No file selected";
+          inlineFilename.textContent = "No file selected";
           return;
         }
         previewImg.src = URL.createObjectURL(file);
         previewImg.style.display = "block";
         previewPlaceholder.hidden = true;
         fileMeta.textContent = file.name;
+        inlineFilename.textContent = file.name;
       }
 
       function renderScores(confidences) {
