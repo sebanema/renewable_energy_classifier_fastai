@@ -68,5 +68,4 @@ demo = gr.Interface(
     description="Drop in your trained model.pkl and launch this Space.",
 )
 
-if __name__ == "__main__":
-    demo.launch(show_error=True)
+demo.launch(show_error=True)
